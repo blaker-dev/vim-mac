@@ -1,10 +1,19 @@
-.DS_Store
+# Build and package artifacts
 /.build/
 /build/
 /Packages
+vim-mac/build/
+vim-mac/vim-mac
+
+# Xcode and macOS system files
+.DS_Store
 xcuserdata/
 *.xcuserstate
 project.xcworkspace/
-vim-mac/build/
-vim-mac/vim-mac
+
+# Internal documentation and planning artifacts
+ARCHITECTURE.md
+PROJECT_MEMORY.md
+ROADMAP.md
+*.pdf
 .system_generated/
