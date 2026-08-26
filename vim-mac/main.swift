@@ -20,17 +20,20 @@ if !isTrusted {
     exit(1)
 }
 
-// 2. Initialize Application as Silent Accessory (No Dock Icon)
+// 2. Pre-flight Dependency & Service Check: Ensure yabai is active
+SpacesController.ensureYabaiRunning()
+
+// 3. Initialize Application as Silent Accessory (No Dock Icon)
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 
-// 3. Initialize Subsystems & Overlays
+// 4. Initialize Subsystems & Overlays
 _ = WindowHistoryTracker.shared
 _ = WindowManager.shared
 _ = OverlayManager.shared
 EventTapManager.shared.start()
 
-// 4. Display Startup Banner
+// 5. Display Startup Banner
 print("""
 \u{001B}[1;32m
       _                             
@@ -38,13 +41,14 @@ print("""
 / _/ / //  ' // _ `/ _ `/ _ `/ __/  
 \\__/_//_/_/_//\\_,_/\\_,_/\\_,_/\\__/   
                                     
-\u{001B}[0m\u{001B}[1m Modal Window Manager for macOS (w/ Floating Overlays)\u{001B}[0m
+\u{001B}[0m\u{001B}[1m Modal Window Manager for macOS\u{001B}[0m
 \u{001B}[36m Version 0.2.0\u{001B}[0m
 
-• \u{001B}[33mCtrl + :\u{001B}[0m Toggle Move Mode (green top-left dot) / Insert Mode
+• \u{001B}[33mCtrl + :\u{001B}[0m Toggle Move Mode (green Active indicator) / Insert Mode
 • In Move Mode:
-  - \u{001B}[32mh / j / k / l\u{001B}[0m : Move window
-  - \u{001B}[32mH / J / K / L\u{001B}[0m : Resize window
+  - \u{001B}[32mh / j / k / l\u{001B}[0m : Move window (50px)
+  - \u{001B}[32mH / J / K / L\u{001B}[0m : Resize window (50px)
+  - \u{001B}[32ma / f\u{001B}[0m         : Throw window to Left / Right Space (yabai)
   - \u{001B}[32m2 / 3 / 4\u{001B}[0m     : Multi-window presets (splits, master-stack, 2x2 grid)
   - \u{001B}[32ms / x\u{001B}[0m         : Swap with previous window
   - \u{001B}[32m?\u{001B}[0m             : Floating keybinding manual
@@ -54,5 +58,5 @@ print("""
 \u{001B}[32m[vim-mac] Daemon and overlays active and listening.\u{001B}[0m
 """)
 
-// 5. Start AppKit Event Loop
+// 6. Start AppKit Event Loop
 app.run()

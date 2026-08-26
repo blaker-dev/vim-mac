@@ -31,7 +31,83 @@ public struct SpacesController {
             }
         }
         
+        // Search PATH via /usr/bin/which
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
+        process.arguments = ["yabai"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus == 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !path.isEmpty, FileManager.default.fileExists(atPath: path) {
+                    cachedYabaiPath = path
+                    return path
+                }
+            }
+        } catch {
+            // Ignore
+        }
+        
         return nil
+    }
+    
+    /// Ensures that yabai is installed and active before vim-mac starts
+    @discardableResult
+    public static func ensureYabaiRunning() -> Bool {
+        guard let yabaiPath = findYabaiPath() else {
+            print("\u{001B}[1;31m[vim-mac] Required dependency missing: 'yabai' is not installed.\u{001B}[0m")
+            print("Please install yabai via Homebrew:")
+            print("  \u{001B}[36mbrew install koekeishiya/formulae/yabai\u{001B}[0m")
+            print("  \u{001B}[36myabai --start-service\u{001B}[0m\n")
+            return false
+        }
+        
+        // Check if yabai is already responsive
+        if isYabaiSocketActive(yabaiPath: yabaiPath) {
+            print("\u{001B}[32m[vim-mac] yabai service is active and connected.\u{001B}[0m")
+            return true
+        }
+        
+        // Attempt to launch yabai service automatically
+        print("\u{001B}[33m[vim-mac] Starting yabai service...\u{001B}[0m")
+        let startProcess = Process()
+        startProcess.executableURL = URL(fileURLWithPath: yabaiPath)
+        startProcess.arguments = ["--start-service"]
+        try? startProcess.run()
+        startProcess.waitUntilExit()
+        
+        usleep(400000) // 400ms delay for socket initialization
+        
+        if isYabaiSocketActive(yabaiPath: yabaiPath) {
+            print("\u{001B}[32m[vim-mac] yabai service started successfully.\u{001B}[0m")
+            return true
+        } else {
+            print("\u{001B}[33m[vim-mac] Warning: yabai service not responding. Run 'yabai --start-service' or check Accessibility permissions.\u{001B}[0m")
+            return false
+        }
+    }
+    
+    private static func isYabaiSocketActive(yabaiPath: String) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: yabaiPath)
+        process.arguments = ["-m", "query", "--spaces"]
+        let pipe = Pipe()
+        let errPipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = errPipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            return false
+        }
     }
     
     /// Throws the active window to an adjacent space AND switches the desktop view
