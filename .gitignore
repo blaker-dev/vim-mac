@@ -1,0 +1,10 @@
+.DS_Store
+/.build/
+/build/
+/Packages
+xcuserdata/
+*.xcuserstate
+project.xcworkspace/
+vim-mac/build/
+vim-mac/vim-mac
+.system_generated/
